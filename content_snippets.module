@@ -1,0 +1,312 @@
+<?php
+
+function content_snippets_ctools_plugin_directory($module, $plugin) {
+  return 'plugins/' . $plugin;
+}
+
+function content_snippets_api_load_type($entity_type, $bundle_name) {
+  return content_snippets_type_load($bundle_name);
+}
+
+function content_snippets_api_save_type($bundle_definition) {
+  unset($bundle_definition->entity_type);
+  $exists = content_snippets_type_load($bundle_definition->bundle_name);
+  if ($exists) {
+    $bundle_definition->is_new = TRUE;
+  } else {
+    unset($bundle_definition);
+  }
+  return content_snippets_type_save($bundle_definition);
+}
+
+function content_snippets_reload_language($form) {
+  return $form['fields'];
+}
+
+function content_snippets_entity_info() {
+  $bundles = array();
+  foreach (content_snippets_types_get_all() as $type) {
+    $bundles[$type->bundle_name] = array(
+      'label' => $type->label,
+      'admin' => array(
+        'path' => 'admin/structure/content_snippets/manage/%content_snippets_type',
+        'real path' => 'admin/structure/content_snippets/manage/' . $type->bundle_name,
+        'bundle argument' => 4,
+        'access arguments' => array('administer snippet types'),
+      ),
+    );
+  }
+  return array(
+    'content_snippet' => array(
+      'label' => t('Content Snippet'),
+      'entity class' => 'Entity',
+      'controller class' => 'ContentSnippetEntityController',
+      'base table' => 'content_snippets',
+      'revision table' => 'content_snippets_revisions',
+      'load hook' => 'content_snippets_load',
+      'bundle_load' => 'content_snippets_api_load_type',
+      'bundle_save' => 'content_snippets_api_save_type',
+      'access callback' => 'content_snippets_access',
+      'fieldable' => TRUE,
+      'bundle keys' => array(
+        'bundle' => 'bundle_name',
+      ),
+      'entity keys' => array(
+        'id' => 'csid',
+        'revision' => 'vid',
+        'bundle' => 'type',
+        'label' => 'label',
+      ),
+      'bundles' => $bundles,
+      'view modes' => array(
+        'full' => array(
+          'label' => t('Full'),
+          'custom settings' => TRUE,
+        ),
+      ),
+    ),
+  );
+}
+
+function content_snippets_entity_diff($old_entity, $new_entity, $context) {
+  $result = array();
+  if ($context['entity_type'] == 'content_snippet') {
+    $result['label'] = array(
+      '#name' => t('Label'),
+      '#states' => array(),
+      '#weight' => -5,
+    );
+    foreach ($context['states'] as $state) {
+      $result['title']['#states'][$state] = array(
+        '#old' => array($old_entity->label),
+        '#new' => array($new_entity->label),
+      );
+    }
+  }
+  return $result;
+}
+
+function content_snippets_permission() {
+  $perms = array(
+    'administer snippet types' => array(
+      'title' => t('Administer Content Snippet Types'),
+      'description' => t('Allows users to create content snippets types'),
+    ),
+    'administer snippets' => array(
+      'title' => t('Administer Content Snippets'),
+      'description' => t('Full access to all content snippets'),
+    ),
+  );
+  foreach (content_snippets_types_get_all() as $type) {
+    $perms['edit ' . $type->bundle_name] = array(
+      'title' => t('Edit Snippets of Type [@type]', array('@type' => $type->label)),
+      'description' => t('Allows the user to create, edit and delete snippets of this type only'),
+    );
+  }
+  return $perms;
+}
+
+function content_snippets_types_get_all() {
+  $types = drupal_static(__FUNCTION__, NULL);
+  if (empty($types)) {
+    $results = db_query('SELECT * FROM {content_snippets_types} ORDER BY `label`');
+    $types = array();
+    foreach ($results as $result) {
+      $types[$result->bundle_name] = $result;
+    }
+  }
+  return $types;
+}
+
+function content_snippets_access($mode, $snippet = NULL) {
+  if (user_access('administer snippets')) {
+    return TRUE;
+  }
+  if ($mode == 'create') {
+    return user_access('edit ' . $snippet);
+  } else if (!empty($snippet->type)) {
+    return user_access('edit ' . $snippet->type);
+  }
+  return FALSE;
+}
+
+function content_snippets_load($snippet_id) {
+  return reset(entity_get_controller('content_snippet')->load(array($snippet_id)));
+}
+
+function content_snippets_delete($snippet) {
+  entity_get_controller('content_snippet')->delete(array($snippet->csid));
+}
+
+function content_snippets_type_exists($snippet_type) {
+  return content_snippets_type_load($snippet_type);
+}
+
+function content_snippets_type_load($snippet_type) {
+  $rs = db_query('SELECT * FROM {content_snippets_types} WHERE bundle_name = :name', array(
+    ':name' => $snippet_type,
+  ));
+  if ($rs->rowCount()) {
+    return $rs->fetchObject();
+  }
+  return FALSE;
+}
+
+function content_snippets_save_snippet($snippet) {
+  return entity_get_controller('content_snippet')->save($snippet);
+}
+
+function content_snippets_type_save($snippet_type) {
+  $pk = array();
+  if (!$snippet_type->is_new) {
+    $pk = array('bundle_name');
+  }
+  $result = drupal_write_record('content_snippets_types', $snippet_type, $pk);
+  if ($result == SAVED_NEW) {
+    field_attach_create_bundle('content_snippets_types', $snippet_type);
+  }
+  return $result;
+}
+
+function content_snippets_page_title($snippet) {
+  return $snippet->label;
+}
+
+function content_snippets_view($snippet, $view_mode = 'full') {
+  return entity_get_controller('content_snippet')->view(array($snippet), $view_mode);
+}
+
+function content_snippets_theme() {
+  return array(
+    'content_snippet' => array(
+      'variables' => array(
+        'snippet' => NULL,
+        'view_mode' => 'full',
+      ),
+      'template' => 'content-snippet',
+    ),
+  );
+}
+
+function content_snippets_preprocess_content_snippet($vars) {
+  $type = $vars['snippet']->type;
+  $mode = $vars['view_mode'];
+  $vars['theme_hook_suggestion'][] = 'content_snippet__' . $type . '__' . $mode;
+  $vars['theme_hook_suggestion'][] = 'content_snippet__' . $type;
+}
+
+function content_snippets_autocomplete($text) {
+  $efq = new EntityFieldQuery();
+  $efq->entityCondition('entity_type', 'content_snippet');
+  $efq->propertyCondition('label', $text, 'CONTAINS');
+  $rs = $efq->execute();
+  $results = array();
+  foreach ($rs['content_snippet'] as $snippet_stub) {
+    $snippet = content_snippets_load($snippet_stub->csid);
+    $results[$snippet->csid] = $snippet->label;
+  }
+  print drupal_json_output($results);
+  exit();
+}
+
+function content_snippets_menu() {
+  return array(
+    'content_snippets/autocomplete' => array(
+      'title' => 'Snippet Autocomplete',
+      'page callback' => 'content_snippets_autocomplete',
+      'page arguments' => array(2),
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    ),
+    'admin/structure/content_snippets' => array(
+      'title' => 'Content Snippets',
+      'access arguments' => array('administer snippet types'),
+      'page callback' => 'content_snippets_page_list_types',
+      'file' => 'content_snippets.pages.inc',
+      'description' => 'Manage content snippets',
+    ),
+    'admin/structure/content_snippets/list' => array(
+      'title' => 'List',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -100,
+    ),
+    'admin/structure/content_snippets/add' => array(
+      'title' => 'Add Snippet Type',
+      'access arguments' => array('administer snippet types'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('content_snippets_type_form'),
+      'type' => MENU_LOCAL_ACTION,
+      'file' => 'content_snippets.pages.inc',
+    ),
+    'admin/structure/content_snippets/manage/%content_snippets_type' => array(
+      'title' => 'Manage Snippet Type',
+      'access arguments' => array('administer snippet types'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('content_snippets_type_form', 4),
+      'file' => 'content_snippets.pages.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'admin/structure/content_snippets/manage/%content_snippets_type/edit' => array(
+      'title' => 'Edit',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -100,
+    ),
+    'admin/content/content_snippets' => array(
+      'title' => 'Snippets',
+      'type' => MENU_LOCAL_TASK | MENU_NORMAL_ITEM,
+      'access callback' => 'content_snippets_access',
+      'access arguments' => array('view'),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('content_snippets_page_list_form'),
+      'file' => 'content_snippets.pages.inc',
+    ),
+    'admin/content/content_snippets/add' => array(
+      'title' => 'Add Content Snippet',
+      'type' => MENU_LOCAL_ACTION,
+      'access callback' => 'content_snippets_access',
+      'access arguments' => array('create'),
+      'page callback' => 'content_snippets_create_list',
+      'file' => 'content_snippets.pages.inc',
+    ),
+    'admin/content/content_snippets/add/%content_snippets_type' => array(
+      'title' => 'Add Content Snippet',
+      'access callback' => 'content_snippets_access',
+      'access arguments' => array('create', 4),
+      'page callback' => 'content_snippets_create_preform',
+      'page arguments' => array(4),
+      'file' => 'content_snippets.pages.inc',
+    ),
+    'admin/content/content_snippets/%content_snippets' => array(
+      'title callback' => 'content_snippets_page_title',
+      'title arguments' => array(3),
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('content_snippets_form', 3),
+      'access callback' => 'content_snippets_access',
+      'access arguments' => array('edit', 3),
+      'file' => 'content_snippets.pages.inc',
+    ),
+    'admin/content/content_snippets/%content_snippets/edit' => array(
+      'title' => 'Edit',
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'weight' => -100,
+    ),
+    'admin/content/content_snippets/%content_snippets/revisions' => array(
+      'title' => 'Revisions',
+      'type' => MENU_LOCAL_TASK,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('content_snippets_revisions_form', 3),
+      'access callback' => 'content_snippets_access',
+      'access arguments' => array('revisions', 3),
+      'file' => 'content_snippets.pages.inc',
+    ),
+    'admin/content/content_snippets/%content_snippets/delete' => array(
+      'title' => 'Delete',
+      'type' => MENU_LOCAL_TASK,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('content_snippets_delete_form', 3),
+      'access callback' => 'content_snippets_access',
+      'access arguments' => array('delete', 3),
+      'file' => 'content_snippets.pages.inc',
+    ),
+  );
+}

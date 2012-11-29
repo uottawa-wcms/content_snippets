@@ -1,0 +1,160 @@
+<?php
+
+function content_snippets_schema() {
+  return array(
+    'content_snippets' => _content_snippets_schema(),
+    'content_snippets_revisions' => _content_snippets_schema_revisions(),
+    'content_snippets_types' => _content_snippets_schema_types(),
+  );
+}
+
+function _content_snippets_schema_types() {
+  return array(
+    'fields' => array(
+      'bundle_name' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      )
+    ),
+    'primary key' => array('bundle_name'),
+    'unique keys' => array(
+      'label' => array('label'),
+    ),
+  );
+}
+
+/**
+ * Table definition for content_snippets_
+ */
+function _content_snippets_schema() {
+  return array(
+    'fields' => array(
+      'csid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'size' => 'normal',
+      ),
+      'vid' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+        'default' => 0,
+      ),
+      'label' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'serialize' => FALSE,
+        'binary' => FALSE,
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'serialize' => FALSE,
+        'binary' => FALSE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array(
+      'csid',
+    ),
+    'unique keys' => array(
+      'vid' => array(
+        'vid',
+      ),
+    ),
+    'indexes' => array(),
+  );
+}
+
+/**
+ * Table definition for content_snippets_revisions
+ */
+function _content_snippets_schema_revisions() {
+  return array(
+    'fields' => array(
+      'vid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'size' => 'normal',
+      ),
+      'csid' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => FALSE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+      'label' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'serialize' => FALSE,
+        'binary' => FALSE,
+      ),
+      'uid' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'log' => array(
+        'type' => 'text',
+        'size' => 'normal',
+        'not null' => TRUE,
+        'serialize' => FALSE,
+        'binary' => FALSE,
+      ),
+      'timestamp' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => FALSE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array(
+      'vid',
+    ),
+    'unique keys' => array(),
+    'indexes' => array(
+      'csid' => array(
+        'csid',
+      ),
+      'uid' => array(
+        'uid',
+      ),
+    ),
+  );
+}

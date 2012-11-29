@@ -1,0 +1,7 @@
+name = Content Snippets
+description = "Provides a content snippets entity type that can be used in Panels."
+core = 7.x
+package = Content
+
+files[] = plugins/entity_crud/content_snippet.inc
+files[] = classes/ContentSnippetEntityController.inc
