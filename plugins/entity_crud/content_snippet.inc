@@ -18,7 +18,7 @@ class EntityCRUDUIContentSnippet extends EntityCRUDUIBase {
     $entity->label = '';
   }
 
-  public function customAccess($op, $entity) {
+  public function customAccess($op, $entity = NULL) {
     switch($op) {
       case 'revision view':
       case 'revision update':
@@ -28,7 +28,7 @@ class EntityCRUDUIContentSnippet extends EntityCRUDUIBase {
     return FALSE;
   }
 
-  public function getPropertyFields($entity) {
+  public function getPropertyFields($entity, $langcode = 'und') {
     $form = array(
       'label' => array(
         '#title' => t('Label'),
