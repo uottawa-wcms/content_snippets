@@ -13,35 +13,14 @@
 class ContentSnippetEntityController extends EntityAPIController {
 
   public function save($snippet, $transaction = NULL) {
-    $tx = !empty($transaction) ? $transaction : db_transaction();
-    try {
-      parent::save($snippet, $tx);
-      global $user;
-      if ($snippet->revision || $snippet->is_new) {
-        $rev = (object) array(
-          'csid' => $snippet->csid,
-          'label' => $snippet->label,
-          'uid' => $user->uid,
-          'log' => !empty($snippet->log) ? $snippet->log : '',
-          'timestamp' => time(),
-        );
-        drupal_write_record('content_snippets_revisions', $rev);
-        $snippet->vid = $rev->vid;
-        drupal_write_record('content_snippets', $snippet, array('csid'));
-      } else {
-        $rev = (object) array(
-          'csid' => $snippet->csid,
-          'label' => $snippet->label,
-          'uid' => $user->uid,
-          'timestamp' => time(),
-          'vid' => $snippet->vid,
-        );
-        drupal_write_record('content_snippets_revisions', $rev, array('vid'));
-      }
-    } catch (Exception $e) {
-      $tx->rollback();
-      throw $e;
+    $tx = $transaction instanceof DatabaseTransaction ? $transaction : db_transaction();
+    if (empty($snippet->log)) {
+      $snippet->log = '';
     }
+    if (empty($snippet->timestamp)) {
+      $snippet->timestamp = time();
+    }
+    parent::save($snippet, $tx);
   }
 
   public function view($entities, $view_mode = 'full', $langcode = NULL, $page = NULL) {

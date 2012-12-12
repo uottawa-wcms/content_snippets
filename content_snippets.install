@@ -135,6 +135,7 @@ function _content_snippets_schema_revisions() {
         'not null' => TRUE,
         'serialize' => FALSE,
         'binary' => FALSE,
+        'default' => '',
       ),
       'timestamp' => array(
         'type' => 'int',
