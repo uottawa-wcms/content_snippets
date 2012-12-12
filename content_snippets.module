@@ -108,11 +108,15 @@ function content_snippets_permission() {
 
 function content_snippets_types_get_all() {
   $types = drupal_static(__FUNCTION__, NULL);
-  if (empty($types)) {
-    $results = db_query('SELECT * FROM {content_snippets_types} ORDER BY `label`');
+  if (!db_table_exists('content_snippets_types')) {
     $types = array();
-    foreach ($results as $result) {
-      $types[$result->bundle_name] = $result;
+  } else {
+    if (empty($types)) {
+      $results = db_query('SELECT * FROM {content_snippets_types} ORDER BY `label`');
+      $types = array();
+      foreach ($results as $result) {
+        $types[$result->bundle_name] = $result;
+      }
     }
   }
   return $types;
