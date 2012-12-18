@@ -208,20 +208,22 @@ function content_snippets_preprocess_content_snippet(&$vars) {
   $vars['theme_hook_suggestion'][] = 'content_snippet__' . $type;
   if (module_exists('user_actions')) {
     if (content_snippets_access('edit', $vars['snippet'])) {
-      $vars['user_actions'] = array(
-        array(
-          'title' => t('Edit'),
-          'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/edit',
-          'is_primary' => TRUE,
-        ),
-        array(
-          'title' => t('Delete'),
-          'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/delete',
-        ),
-        array(
-          'title' => t('Manage Revisions'),
-          'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/revisions',
-        ),
+      $vars['user_actions']['edit'] =  array(
+        'title' => t('Edit'),
+        'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/edit',
+        'is_primary' => TRUE,
+      );
+    }
+    if (content_snippets_access('delete', $vars['snippet'])) {
+      $vars['user_actions']['delete'] = array(
+        'title' => t('Delete'),
+        'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/delete',
+      );
+    }
+    if (content_snippets_access('revisions', $vars['snippet'])) {
+      $vars['user_actions']['revise'] = array(
+        'title' => t('Manage Revisions'),
+        'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/revisions',
       );
     }
   }
