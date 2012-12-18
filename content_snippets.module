@@ -127,7 +127,16 @@ function content_snippets_access($mode, $snippet = NULL) {
     return TRUE;
   }
   if ($mode == 'create') {
-    return user_access('edit ' . $snippet);
+    if (!empty($snippet)) {
+      return user_access('edit ' . $snippet);
+    } else {
+      foreach (array_keys(content_snippets_types_get_all()) as $type) {
+        if (user_access('edit ' . $type)) {
+          return TRUE;
+        }
+      }
+      return FALSE;
+    }
   } else if (!empty($snippet->type)) {
     return user_access('edit ' . $snippet->type);
   }
@@ -192,12 +201,55 @@ function content_snippets_theme() {
   );
 }
 
-function content_snippets_preprocess_content_snippet($vars) {
+function content_snippets_preprocess_content_snippet(&$vars) {
   $type = $vars['snippet']->type;
   $mode = $vars['view_mode'];
   $vars['theme_hook_suggestion'][] = 'content_snippet__' . $type . '__' . $mode;
   $vars['theme_hook_suggestion'][] = 'content_snippet__' . $type;
+  if (module_exists('user_actions')) {
+    if (content_snippets_access('edit', $vars['snippet'])) {
+      $vars['user_actions'] = array(
+        array(
+          'title' => t('Edit'),
+          'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/edit',
+          'is_primary' => TRUE,
+        ),
+        array(
+          'title' => t('Delete'),
+          'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/delete',
+        ),
+        array(
+          'title' => t('Manage Revisions'),
+          'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/revisions',
+        ),
+      );
+    }
+  }
 }
+
+
+/*
+ * function user_actions_preprocess_node(&$vars) {
+  if (node_access('update', $vars['node'])) {
+    $vars['user_actions'][] = array(
+      'title' => t('Edit'),
+      'path' => 'node/' . $vars['node']->nid . '/edit',
+      'is_primary' => TRUE,
+    );
+  }
+  if (node_access('delete', $vars['node'])) {
+    $vars['user_actions'][] = array(
+      'title' => t('Delete'),
+      'path' => 'node/' . $vars['node']->nid . '/delete',
+    );
+  }
+}
+
+function user_actions_process_node(&$vars) {
+  user_actions_do_process($vars);
+}
+
+ */
 
 function content_snippets_autocomplete($text) {
   $efq = new EntityFieldQuery();
