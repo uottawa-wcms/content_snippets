@@ -212,18 +212,21 @@ function content_snippets_preprocess_content_snippet(&$vars) {
         'title' => t('Edit'),
         'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/edit',
         'is_primary' => TRUE,
+        'weight' => -25,
       );
     }
     if (content_snippets_access('delete', $vars['snippet'])) {
       $vars['user_actions']['delete'] = array(
         'title' => t('Delete'),
         'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/delete',
+        'weight' => 25,
       );
     }
     if (content_snippets_access('revisions', $vars['snippet'])) {
       $vars['user_actions']['revise'] = array(
         'title' => t('Manage Revisions'),
         'path' => 'admin/content/content_snippets/' . $vars['snippet']->csid . '/revisions',
+        'weight' => 15,
       );
     }
   }
