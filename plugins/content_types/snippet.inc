@@ -38,7 +38,9 @@ function content_snippets_snippet_content_type_edit_form($form, &$form_state) {
   );
    *
    */
-  $snippets = entity_get_controller('content_snippet')->load(FALSE);
+  $controller = entity_get_controller('content_snippet');
+  $controller->resetCache();
+  $snippets = $controller->load(FALSE);
   $snippet_opts = array();
   foreach ($snippets as $snippet) {
     $snippet_opts[$snippet->csid] = $snippet->label;

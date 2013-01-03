@@ -25,3 +25,10 @@ version = "unknown"
 project = "content_snippets"
 datestamp = "1355423730"
 
+
+
+; Information added by drush on 2013-01-03
+version = "unknown"
+project = "content_snippets"
+datestamp = "1357224005"
+
