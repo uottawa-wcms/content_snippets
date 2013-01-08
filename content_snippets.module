@@ -204,8 +204,8 @@ function content_snippets_theme() {
 function content_snippets_preprocess_content_snippet(&$vars) {
   $type = $vars['snippet']->type;
   $mode = $vars['view_mode'];
-  $vars['theme_hook_suggestion'][] = 'content_snippet__' . $type . '__' . $mode;
-  $vars['theme_hook_suggestion'][] = 'content_snippet__' . $type;
+  $vars['theme_hook_suggestions'][] = 'content_snippet__' . $type . '__' . $mode;
+  $vars['theme_hook_suggestions'][] = 'content_snippet__' . $type;
   if (module_exists('user_actions')) {
     if (content_snippets_access('edit', $vars['snippet'])) {
       $vars['user_actions']['edit'] =  array(
