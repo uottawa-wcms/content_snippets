@@ -1,5 +1,13 @@
 <?php
 
+function content_snippets_yamlconfig_handlers() {
+  return array(
+    'snippet_type' => array(
+      'weight' => 500,
+    ),
+  );
+}
+
 function content_snippets_ctools_plugin_directory($module, $plugin) {
   return 'plugins/' . $plugin;
 }
