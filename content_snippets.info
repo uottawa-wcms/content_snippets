@@ -5,3 +5,10 @@ package = Content
 
 files[] = plugins/entity_crud/content_snippet.inc
 files[] = classes/ContentSnippetEntityController.inc
+
+
+; Information added by drush on 2013-03-21
+version = "unknown"
+project = "content_snippets"
+datestamp = "1363875961"
+

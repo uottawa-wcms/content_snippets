@@ -173,6 +173,12 @@ function content_snippets_type_load($snippet_type) {
   return FALSE;
 }
 
+function content_snippets_type_delete($type_name) {
+  $type = content_snippets_type_load($type_name);
+  db_delete('content_snippet_types')->condition('bundle_name', $type_name)->execute();
+  field_attach_delete_bundle('content_snippet', $type_name);
+}
+
 function content_snippets_save_snippet($snippet) {
   return entity_get_controller('content_snippet')->save($snippet);
 }
